@@ -22,54 +22,7 @@ public class StockDetailActivity extends AppCompatActivity {
         initViews();
 
         // 获取从MainActivity传递过来的数据
-        Intent intent = getIntent();
-        String stockName = intent.getStringExtra("stockName");
-        String stockCode = intent.getStringExtra("stockCode");
-        double currentPrice = intent.getDoubleExtra("currentPrice", 0.0);
-        double prevClose = intent.getDoubleExtra("prevClose", 0.0);
-        double openPrice = intent.getDoubleExtra("openPrice", 0.0);
-        double highPrice = intent.getDoubleExtra("highPrice", 0.0);
-        double lowPrice = intent.getDoubleExtra("lowPrice", 0.0);
-        long volume = intent.getLongExtra("volume", 0);
-        double amount = intent.getDoubleExtra("amount", 0.0);
-
-        // 计算涨跌额和涨跌幅
-        double changeAmount = currentPrice - prevClose;
-        double changePercent = (changeAmount / prevClose) * 100;
-
-        // 设置数据到UI
-        stockNameView.setText(stockName);
-        stockCodeView.setText(stockCode);
-
-        // 使用DecimalFormat格式化价格和百分比
-        DecimalFormat priceFormat = new DecimalFormat("0.00");
-        DecimalFormat percentFormat = new DecimalFormat("0.00%");
-        DecimalFormat volumeFormat = new DecimalFormat("#,###");
-
-        currentPriceView.setText(priceFormat.format(currentPrice));
-        changeAmountView.setText(priceFormat.format(changeAmount));
-        changePercentView.setText(percentFormat.format(changePercent / 100));
-
-        // 设置其他行情数据
-        openPriceView.setText(priceFormat.format(openPrice));
-        highPriceView.setText(priceFormat.format(highPrice));
-        lowPriceView.setText(priceFormat.format(lowPrice));
-        prevCloseView.setText(priceFormat.format(prevClose));
-        volumeView.setText(volumeFormat.format(volume));
-        amountView.setText(volumeFormat.format(amount));
-
-        // 根据涨跌情况设置颜色
-        if (changeAmount > 0) {
-            // 上涨：红色
-            currentPriceView.setTextColor(getResources().getColor(android.R.color.holo_red_dark));
-            changeAmountView.setTextColor(getResources().getColor(android.R.color.holo_red_dark));
-            changePercentView.setTextColor(getResources().getColor(android.R.color.holo_red_dark));
-        } else if (changeAmount < 0) {
-            // 下跌：绿色
-            currentPriceView.setTextColor(getResources().getColor(android.R.color.holo_green_dark));
-            changeAmountView.setTextColor(getResources().getColor(android.R.color.holo_green_dark));
-            changePercentView.setTextColor(getResources().getColor(android.R.color.holo_green_dark));
-        }
+        initAndSetData();
     }
 
     private void initViews() {
@@ -84,5 +37,51 @@ public class StockDetailActivity extends AppCompatActivity {
         prevCloseView = findViewById(R.id.prevClose);
         volumeView = findViewById(R.id.volume);
         amountView = findViewById(R.id.amount);
+    }
+
+    private void initAndSetData() {
+        Intent intent = getIntent();
+        
+        // 使用Bundle简化数据获取
+        Bundle extras = intent.getExtras();
+        String stockName = extras.getString("stockName");
+        String stockCode = extras.getString("stockCode");
+        double currentPrice = extras.getDouble("currentPrice");
+        double prevClose = extras.getDouble("prevClose");
+        double openPrice = extras.getDouble("openPrice");
+        double highPrice = extras.getDouble("highPrice");
+        double lowPrice = extras.getDouble("lowPrice");
+        long volume = extras.getLong("volume");
+        double amount = extras.getDouble("amount");
+        
+        // 计算涨跌
+        double changeAmount = currentPrice - prevClose;
+        double changePercent = (changeAmount / prevClose) * 100;
+        
+        // 设置基本数据
+        stockNameView.setText(stockName);
+        stockCodeView.setText(stockCode);
+        
+        // 格式化数据
+        DecimalFormat priceFormat = new DecimalFormat("0.00");
+        currentPriceView.setText(priceFormat.format(currentPrice));
+        changeAmountView.setText(priceFormat.format(changeAmount));
+        changePercentView.setText(new DecimalFormat("0.00%").format(changePercent / 100));
+        
+        // 设置详细数据
+        openPriceView.setText(priceFormat.format(openPrice));
+        highPriceView.setText(priceFormat.format(highPrice));
+        lowPriceView.setText(priceFormat.format(lowPrice));
+        prevCloseView.setText(priceFormat.format(prevClose));
+        volumeView.setText(String.format("%,d", volume));
+        amountView.setText(String.format("%,.2f", amount));
+        
+        // 设置颜色
+        int color = changeAmount > 0 ? android.R.color.holo_red_dark :
+                  changeAmount < 0 ? android.R.color.holo_green_dark :
+                  android.R.color.primary_text_dark;
+        currentPriceView.setTextColor(getResources().getColor(color));
+        changeAmountView.setTextColor(getResources().getColor(color));
+        changePercentView.setTextColor(getResources().getColor(color));
     }
 }
