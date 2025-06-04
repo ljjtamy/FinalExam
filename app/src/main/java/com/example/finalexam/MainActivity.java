@@ -1,4 +1,4 @@
-package com.example.finalexam; // 根据你的项目包名修改
+package com.example.finalexam;
 
 import android.app.ListActivity;
 import android.content.Intent;
@@ -9,6 +9,7 @@ import android.os.Message;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.ProgressBar;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -24,10 +25,14 @@ public class MainActivity extends ListActivity implements AdapterView.OnItemClic
     private ArrayList<HashMap<String, String>> listItems;
     private StockAdapter listItemAdapter;
     private Handler handler;
+    private ProgressBar progressBar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        
+        progressBar = findViewById(R.id.progressBar);
         initListView();
         setListAdapter(listItemAdapter);
 
@@ -55,12 +60,14 @@ public class MainActivity extends ListActivity implements AdapterView.OnItemClic
         listItems = new ArrayList<>();
         listItemAdapter = new StockAdapter(
                 this,
-                R.layout.list_item,  // 对应你创建的list_item.xml布局
+                R.layout.list_item,  // 对应list_item.xml布局
                 listItems
         );
     }
 
     private void loadStockData() {
+        runOnUiThread(() -> progressBar.setVisibility(View.VISIBLE));
+
         new Thread(() -> {
             try {
                 // 使用腾讯财经API获取股票数据
@@ -87,6 +94,8 @@ public class MainActivity extends ListActivity implements AdapterView.OnItemClic
 
             } catch (IOException e) {
                 Log.e(TAG, "获取股票数据失败: " + e.getMessage());
+            } finally {
+                runOnUiThread(() -> progressBar.setVisibility(View.GONE));
             }
         }).start();
     }
