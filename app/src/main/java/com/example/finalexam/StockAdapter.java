@@ -25,7 +25,7 @@ public class StockAdapter extends ArrayAdapter<HashMap<String, String>> {
     public View getView(int position, View convertView, ViewGroup parent) {
         Map<String, String> stock = getItem(position);
         ViewHolder viewHolder;
-    
+
         if (convertView == null) {
             convertView = LayoutInflater.from(getContext()).inflate(resourceId, parent, false);
             viewHolder = new ViewHolder();
@@ -36,20 +36,20 @@ public class StockAdapter extends ArrayAdapter<HashMap<String, String>> {
         } else {
             viewHolder = (ViewHolder) convertView.getTag();
         }
-    
+
         // 设置数据
         viewHolder.stockName.setText(stock.get("stockName"));
         viewHolder.currentPrice.setText(stock.get("currentPrice"));
         viewHolder.changePercent.setText(stock.get("changePercent"));
-    
+
         // 设置颜色
         double changePercent = Double.parseDouble(stock.get("changePercent").replace("%", ""));
-        int color = changePercent > 0 ? android.R.color.holo_red_dark : 
-                  changePercent < 0 ? android.R.color.holo_green_dark : 
-                  android.R.color.primary_text_dark;
+        int color = changePercent > 0 ? android.R.color.holo_red_dark :
+                changePercent < 0 ? android.R.color.holo_green_dark :
+                        android.R.color.primary_text_dark;
         viewHolder.currentPrice.setTextColor(getContext().getResources().getColor(color));
         viewHolder.changePercent.setTextColor(getContext().getResources().getColor(color));
-    
+
         return convertView;
     }
 

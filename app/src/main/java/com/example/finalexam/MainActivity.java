@@ -17,7 +17,10 @@ import java.util.List;
 import java.util.Map;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 public class MainActivity extends ListActivity implements AdapterView.OnItemClickListener {
 
@@ -31,7 +34,7 @@ public class MainActivity extends ListActivity implements AdapterView.OnItemClic
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        
+
         progressBar = findViewById(R.id.progressBar);
         initListView();
         setListAdapter(listItemAdapter);
@@ -70,21 +73,41 @@ public class MainActivity extends ListActivity implements AdapterView.OnItemClic
 
         new Thread(() -> {
             try {
-                // 使用腾讯财经API获取股票数据
-                Document doc = Jsoup.connect("https://qt.gtimg.cn/q=").get();
-
-                // 解析HTML获取股票数据（这里需要根据实际网页结构调整选择器）
-                Elements stockElements = doc.select("div.stock-item");
+                // 新浪财经实时数据接口（获取沪深A股前20只股票）
+                String url = "https://hq.sinajs.cn/list=sh000001,sh600519,sh601318,sz000858,sh601888,sh601398,sh601988,sh601288,sh601988,sh601818";
+                Document doc = Jsoup.connect(url)
+                        .header("Referer", "https://finance.sina.com.cn")
+                        .ignoreContentType(true)
+                        .timeout(10000)
+                        .get();
+                
+                // 解析返回的数据
+                String[] stockDataArray = doc.body().text().split(";");
                 List<HashMap<String, String>> stocks = new ArrayList<>();
+                
+                for (String stockData : stockDataArray) {
+                    if (stockData.trim().isEmpty()) continue;
+                    
+                    // 示例数据格式: var hq_str_sh600519="贵州茅台,1920.50,...";
+                    String[] parts = stockData.split("=");
+                    if (parts.length < 2) continue;
+                    
+                    String[] values = parts[1].replace("\"", "").split(",");
+                    if (values.length < 2) continue;
 
-                for (int i = 0; i < 10; i++) {  // 示例：获取10条股票数据
                     HashMap<String, String> stock = new HashMap<>();
-                    stock.put("stockName", "股票" + i);
-                    stock.put("currentPrice", String.format("%.2f", Math.random() * 100));
-
-                    double changePercent = (Math.random() - 0.5) * 10;
-                    stock.put("changePercent", String.format("%.2f%%", changePercent));
-
+                    stock.put("stockName", values[0]);  // 股票名称
+                    stock.put("stockCode", parts[0].substring(parts[0].lastIndexOf("_") + 1)); // 股票代码
+                    stock.put("currentPrice", values[1]); // 最新价
+                    
+                    // 计算涨跌幅（需要昨收价）
+                    if (values.length > 2 && !values[2].isEmpty()) {
+                        double prevClose = Double.parseDouble(values[2]);
+                        double currentPrice = Double.parseDouble(values[1]);
+                        double changePercent = ((currentPrice - prevClose) / prevClose) * 100;
+                        stock.put("changePercent", String.format("%.2f%%", changePercent));
+                    }
+                    
                     stocks.add(stock);
                 }
 
@@ -92,7 +115,7 @@ public class MainActivity extends ListActivity implements AdapterView.OnItemClic
                 Message msg = handler.obtainMessage(1, stocks);
                 handler.sendMessage(msg);
 
-            } catch (IOException e) {
+            } catch (Exception e) {
                 Log.e(TAG, "获取股票数据失败: " + e.getMessage());
             } finally {
                 runOnUiThread(() -> progressBar.setVisibility(View.GONE));
